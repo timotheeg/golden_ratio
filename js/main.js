@@ -1,10 +1,11 @@
 Math.TAU = Math.PI * 2;
+Math.PHI = 1.61803398875;
 
 const STAGE_WIDTH = 1400;
 const STAGE_HEIGHT = 787;
 
 const SEED_BASE_RADIUS = 10;
-const SEED_RADIUS_VARIANCE = 0.5;
+const SEED_RADIUS_RATIO_VARIANCE = 0.05;
 
 const DISTANCE_ORIGINAL = 20;
 const DISTANCE_INCREMENT = SEED_BASE_RADIUS * 0.3;
@@ -24,6 +25,7 @@ $(function() {
 		get_angle('angle_to')
 	));
 
+	$('#draw').click();
 });
 
 function get_state_width() {
@@ -44,6 +46,7 @@ function setStage() {
 	stage.addChild(main);
 
 	// createjs.Ticker.timingMode = createjs.Ticker.RAF;
+	createjs.Ticker.framerate = 40;
 }
 
 function get_num_seeds() {
@@ -54,8 +57,8 @@ function get_angle(input_id) {
 	return parseFloat($(`#${input_id}`).val());
 }
 
-function get_seed_radius() {
-	return SEED_BASE_RADIUS + SEED_RADIUS_VARIANCE * (Math.random() * 2 - 1);
+function get_seed_scale() {
+	return 1 + SEED_RADIUS_RATIO_VARIANCE * (Math.random() * 2 - 1);
 }
 
 function draw(angle_ratio) {
@@ -68,16 +71,15 @@ function draw(angle_ratio) {
 
 	do {
 		let circle = new createjs.Shape();
-		let radius = get_seed_radius();
 
 		circle.graphics
 			.setStrokeStyle(2)
 			.beginStroke('black')
 			.beginFill('#eaaf36')
-			.drawCircle(0, 0, radius);
+			.drawCircle(0, 0, SEED_BASE_RADIUS);
 
-		circle.regX = radius;
-		circle.regy = radius;
+		circle.regX = circle.regy = SEED_BASE_RADIUS;
+		circle.scaleX = circle.scaleY = get_seed_scale();
 
 		circle.x = Math.cos(cur_angle) * cur_distance;
 		circle.y = Math.sin(cur_angle) * cur_distance;
@@ -86,7 +88,9 @@ function draw(angle_ratio) {
 		cur_increment *= (1 - DISTANCE_INCREMENT_REDUCTION);
 		cur_angle += angle_ratio * Math.TAU;
 
-		main.addChild(circle);
+		console.log(remaining_seeds);
+
+		main.addChildAt(circle, 0);
 	}
 	while(remaining_seeds--);
 
