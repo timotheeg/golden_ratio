@@ -122,7 +122,7 @@ function draw(turn_ratio) {
 		let circle = new createjs.Shape();
 
 		circle.graphics
-			.setStrokeStyle(1)
+			.setStrokeStyle(1.5)
 			.beginStroke('black')
 			.beginFill('#eaaf36')
 			.drawCircle(0, 0, SEED_BASE_RADIUS);
