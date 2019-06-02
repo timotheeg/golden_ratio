@@ -1,8 +1,10 @@
+// a few extra useful Math constants
 Math.TAU = Math.PI * 2;
-Math.PHI = 1.61803398875;
+Math.SQRT5 = Math.sqrt(5);
+Math.PHI = (1 + Math.SQRT5) / 2;
 
-const STAGE_WIDTH = 1400;
-const STAGE_HEIGHT = 787;
+const STAGE_WIDTH = 800;
+const STAGE_HEIGHT = 800;
 
 const SEED_BASE_RADIUS = 10;
 const SEED_RADIUS_RATIO_VARIANCE = 0.05;
@@ -13,7 +15,7 @@ const DISTANCE_INCREMENT_REDUCTION = 0.01;
 
 const ANIMATION_INCREMENT = 0.0001;
 
-let stage, main, angle_text;
+let stage, main, angle_text, tween;
 
 
 $(function() {
@@ -24,11 +26,25 @@ $(function() {
 		draw(get_angle('turn_ratio'))
 	});
 
-	$('#animate_start').click(() => animate(
-		get_angle('angle_from'),
-		get_angle('angle_to')
-	));
-	$('#animate_stop').click(() => createjs.Tween.removeTweens(main));
+	$('#animate_start').click(() => {
+		createjs.Tween.removeTweens(main);
+
+		animate(
+			get_angle('turn_ratio_from'),
+			get_angle('turn_ratio_to'),
+			$('#duration').val() * 1000
+		);
+	});
+	$('#animate_play_pause').click(() => {
+		if (tween) {
+			tween.paused = !tween.paused;
+		}
+	});
+	$('#animate_stop').click(() => {
+		createjs.Tween.removeTweens(main)
+		tween = null;
+		$('#draw').click();
+	});
 
 	angle_text = $('#cur_angle');
 
@@ -54,7 +70,6 @@ function setStage() {
 	stage.addChild(main);
 
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
-	// createjs.Ticker.framerate = 40;
 }
 
 function get_num_seeds() {
@@ -62,7 +77,29 @@ function get_num_seeds() {
 }
 
 function get_angle(input_id) {
-	return parseFloat($(`#${input_id}`).val());
+	let angle = $(`#${input_id}`).val().replace(/\s+/g, '');
+
+	if (/^[0-9.-]+$/.test(angle)) {
+		return parseFloat(angle);
+	}
+
+	// overwrite the known math constants and verify content is "sane"
+	['pi', 'tau', 'phi', 'e', 'ln2', 'sqrt2'].forEach(constant => {
+		angle = angle.replace(new RegExp(`\\b${constant}\\b`, 'gi'), Math[constant.toUpperCase()]);
+	});
+
+	// restrict eval input to sequence of multiplications and division only
+	if (/^[0-9./*-]+$/.test(angle)) {
+		try {
+			return eval(angle);
+		}
+		catch(err) {}
+	}
+
+	const error_msg = `Input error: ${$(`#${input_id}`).val()}: Only allowed valid sequence of number or constants and / and * operators`;
+
+	angle_text.text(error_msg);
+	throw new SyntaxError(error_msg);
 }
 
 function get_seed_scale() {
@@ -78,6 +115,8 @@ function do_draw(turn_ratio) {
 	angle_text.text(turn_ratio);
 	main.removeAllChildren();
 
+	const constriction_rate = parseFloat($('#constriction_rate').val());
+
 	let cur_angle = 0;
 	let cur_distance = DISTANCE_ORIGINAL;
 	let cur_increment = DISTANCE_INCREMENT;
@@ -92,14 +131,14 @@ function do_draw(turn_ratio) {
 			.beginFill('#eaaf36')
 			.drawCircle(0, 0, SEED_BASE_RADIUS);
 
-		circle.regX = circle.regy = SEED_BASE_RADIUS;
 		circle.scaleX = circle.scaleY = get_seed_scale();
 
 		circle.x = Math.cos(cur_angle) * cur_distance;
 		circle.y = Math.sin(cur_angle) * cur_distance;
 
 		cur_distance += cur_increment;
-		cur_increment *= (1 - DISTANCE_INCREMENT_REDUCTION);
+		cur_increment *= constriction_rate;
+
 		cur_angle += turn_ratio * Math.TAU;
 
 		main.addChildAt(circle, 0);
@@ -112,17 +151,17 @@ function do_draw(turn_ratio) {
 let animating = false
 let cur_angle;
 
-function animate(angle_ratio_from, angle_ratio_to) {
-	createjs.Tween.removeTweens(main);
+function animate(turn_ratio_from, turn_ratio_to, duration) {
+	main.current_turn_ratio = turn_ratio_from;
 
-	const angle_from = get_angle('angle_from');
-	const angle_to = get_angle('angle_to');
+	tween = createjs.Tween.get(main)
+		.to({current_turn_ratio: turn_ratio_to}, duration);
 
-	main.anim_angle = angle_from;
-
-	createjs.Tween.get(main)
-		.to({anim_angle: angle_to}, $('#duration').val() * 1000)
+	tween
 		.addEventListener('change', () => {
-			do_draw(main.anim_angle);
+			do_draw(main.current_turn_ratio);
+		})
+		.call(() => {
+			tween = null;
 		});
 }
