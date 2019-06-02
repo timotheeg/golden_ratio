@@ -23,17 +23,33 @@
   <![endif]-->
 
   <!-- Add your site or application content here -->
-  <div id="controls">
-    <span for="num_seeds">Number of seeds: </span> <input id="num_seeds" type="number" value="200" />
-    -
-    <span for="angle_ratio">Angle ratio per seed</span> <input id="angle_ratio" type="text" value="1.61803398875" />
-    -
-    <button id="draw">Draw</button>
-    -
-    <button id="animate">Animate</button> from: <input id="angle_from" type="text" value="0.2" /> to: <input id="angle_to" type="text" value="0.66666666" /> with increment: <input id="angle_increment" type="text" value="0.0001" />
-
-  </div>
+  <form id="controls">
+      <fieldset>
+        <legend>General</legend>
+        <span for="num_seeds">Number of seeds:</span><br />
+        <input id="num_seeds" type="number" value="200" /><br />
+        <span for="falloff_rate">Falloff Rate:</span><br />
+        <input id="falloff_rate" type="number" value="0.99" />
+      </fieldset>
+      <fieldset>
+        <legend>Draw</legend>
+        <span for="turn_ratio">Turn ratio per seed</span><br />
+        <input id="turn_ratio" type="text" value="1.61803398875" /><br />
+        <button id="draw">Draw</button>
+      </fieldset>
+      <fieldset>
+        <legend>Animate</legend>
+         <span for="angle_from">from angle:</span><br />
+         <input id="angle_from" type="text" value="0.2" /><br />
+         <span for="angle_to">to angle:</span><br />
+         <input id="angle_to" type="text" value="0.66666666" /><br />
+         <span for="duration">duration (in seconds):</span><br />
+         <input id="duration" type="text" value="120" /><br />
+         <button id="animate_start">Animate</button> - <button id="animate_stop">Stop</button>
+      </fieldset>
+  </form>
   <div id="rendering">
+    <div id="cur_angle"></div>
     <canvas id="flower" width="1400" height="787"></canvas>
   </div>
   <script src="js/vendor/modernizr-3.7.1.min.js"></script>

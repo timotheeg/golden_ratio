@@ -13,17 +13,24 @@ const DISTANCE_INCREMENT_REDUCTION = 0.01;
 
 const ANIMATION_INCREMENT = 0.0001;
 
-let stage, main;
+let stage, main, angle_text;
 
 
 $(function() {
 	setStage();
 
-	$('#draw').click(() => draw(get_angle('angle_ratio')));
-	$('#animate').click(() => animate(
+	$('#controls').submit(() => false);
+	$('#draw').click(() => {
+		draw(get_angle('turn_ratio'))
+	});
+
+	$('#animate_start').click(() => animate(
 		get_angle('angle_from'),
 		get_angle('angle_to')
 	));
+	$('#animate_stop').click(() => createjs.Tween.removeTweens(main));
+
+	angle_text = $('#cur_angle');
 
 	$('#draw').click();
 });
@@ -38,15 +45,16 @@ function get_state_height() {
 
 function setStage() {
 	stage = new createjs.Stage("flower");
-	main = new createjs.MovieClip();
 
+	main = new createjs.MovieClip();
 	main.x = Math.floor(get_state_width() / 2);
 	main.y = Math.floor(get_state_height() / 2);
 
+	stage.addChild(angle_text);
 	stage.addChild(main);
 
-	// createjs.Ticker.timingMode = createjs.Ticker.RAF;
-	createjs.Ticker.framerate = 40;
+	createjs.Ticker.timingMode = createjs.Ticker.RAF;
+	// createjs.Ticker.framerate = 40;
 }
 
 function get_num_seeds() {
@@ -61,7 +69,13 @@ function get_seed_scale() {
 	return 1 + SEED_RADIUS_RATIO_VARIANCE * (Math.random() * 2 - 1);
 }
 
-function draw(angle_ratio) {
+function draw(turn_ratio) {
+	createjs.Tween.removeTweens(main);
+	do_draw(turn_ratio);
+}
+
+function do_draw(turn_ratio) {
+	angle_text.text(turn_ratio);
 	main.removeAllChildren();
 
 	let cur_angle = 0;
@@ -86,9 +100,7 @@ function draw(angle_ratio) {
 
 		cur_distance += cur_increment;
 		cur_increment *= (1 - DISTANCE_INCREMENT_REDUCTION);
-		cur_angle += angle_ratio * Math.TAU;
-
-		console.log(remaining_seeds);
+		cur_angle += turn_ratio * Math.TAU;
 
 		main.addChildAt(circle, 0);
 	}
@@ -101,21 +113,16 @@ let animating = false
 let cur_angle;
 
 function animate(angle_ratio_from, angle_ratio_to) {
-	if (animating) return;
-	animating = true;
+	createjs.Tween.removeTweens(main);
 
-	cur_angle = get_angle('angle_from');
+	const angle_from = get_angle('angle_from');
+	const angle_to = get_angle('angle_to');
 
-	createjs.Ticker.addEventListener("tick", do_animate);
-}
+	main.anim_angle = angle_from;
 
-function do_animate() {
-	draw(cur_angle);
-	cur_angle += ANIMATION_INCREMENT;
-
-	console.log(cur_angle);
-
-	if (cur_angle >= get_angle('angle_to')) {
-		createjs.Ticker.removeEventListener("tick", do_animate);
-	}
+	createjs.Tween.get(main)
+		.to({anim_angle: angle_to}, $('#duration').val() * 1000)
+		.addEventListener('change', () => {
+			do_draw(main.anim_angle);
+		});
 }
