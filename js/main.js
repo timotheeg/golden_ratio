@@ -9,11 +9,9 @@ const STAGE_HEIGHT = 800;
 const SEED_BASE_RADIUS = 10;
 const SEED_RADIUS_RATIO_VARIANCE = 0.05;
 
-const DISTANCE_ORIGINAL = 20;
+const DISTANCE_ORIGINAL = SEED_BASE_RADIUS * 1.75;
 const DISTANCE_INCREMENT = SEED_BASE_RADIUS * 0.3;
-const DISTANCE_INCREMENT_REDUCTION = 0.01;
 
-const ANIMATION_INCREMENT = 0.0001;
 
 let stage, main, angle_text, tween;
 
@@ -113,12 +111,7 @@ function draw(turn_ratio) {
 
 	const constriction_rate = parseFloat($('#constriction_rate').val());
 
-	let cur_angle = 0;
-	let cur_distance = DISTANCE_ORIGINAL;
-	let cur_increment = DISTANCE_INCREMENT;
-	let remaining_seeds = get_num_seeds();
-
-	do {
+	for (let seed_idx=0; seed_idx<get_num_seeds(); seed_idx++) {
 		let circle = new createjs.Shape();
 
 		circle.graphics
@@ -129,17 +122,14 @@ function draw(turn_ratio) {
 
 		circle.scaleX = circle.scaleY = get_seed_scale();
 
+		const cur_angle = Math.TAU * turn_ratio * seed_idx;
+		const cur_distance = DISTANCE_ORIGINAL + DISTANCE_INCREMENT * (Math.pow(constriction_rate, seed_idx + 1) - 1) / (constriction_rate - 1);
+
 		circle.x = Math.cos(cur_angle) * cur_distance;
 		circle.y = Math.sin(cur_angle) * cur_distance;
 
-		cur_distance += cur_increment;
-		cur_increment *= constriction_rate;
-
-		cur_angle += turn_ratio * Math.TAU;
-
 		main.addChildAt(circle, 0);
 	}
-	while(remaining_seeds--);
 
 	stage.update();
 }
