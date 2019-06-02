@@ -23,6 +23,7 @@ $(function() {
 
 	$('#controls').submit(() => false);
 	$('#draw').click(() => {
+		createjs.Tween.removeTweens(main);
 		draw(get_angle('turn_ratio'))
 	});
 
@@ -79,7 +80,7 @@ function get_num_seeds() {
 function get_angle(input_id) {
 	let angle = $(`#${input_id}`).val().replace(/\s+/g, '');
 
-	if (/^[0-9.-]+$/.test(angle)) {
+	if (/^-?[0-9.]+$/.test(angle)) {
 		return parseFloat(angle);
 	}
 
@@ -107,11 +108,6 @@ function get_seed_scale() {
 }
 
 function draw(turn_ratio) {
-	createjs.Tween.removeTweens(main);
-	do_draw(turn_ratio);
-}
-
-function do_draw(turn_ratio) {
 	angle_text.text(turn_ratio);
 	main.removeAllChildren();
 
@@ -126,7 +122,7 @@ function do_draw(turn_ratio) {
 		let circle = new createjs.Shape();
 
 		circle.graphics
-			.setStrokeStyle(2)
+			.setStrokeStyle(1)
 			.beginStroke('black')
 			.beginFill('#eaaf36')
 			.drawCircle(0, 0, SEED_BASE_RADIUS);
@@ -159,7 +155,7 @@ function animate(turn_ratio_from, turn_ratio_to, duration) {
 
 	tween
 		.addEventListener('change', () => {
-			do_draw(main.current_turn_ratio);
+			draw(main.current_turn_ratio);
 		})
 		.call(() => {
 			tween = null;
